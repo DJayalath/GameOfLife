@@ -17,13 +17,13 @@ Use TICK_DURATION to adjust speed of simulation
 int s_width = 1280;
 int s_height = 720;
 
-int cell_size = 20;
+int cell_size = 10;
 
 int field_width = s_width / cell_size;
 int field_height = s_height / cell_size;
 
 // % Chance of a cell being alive at the start
-const int ALIVE_CHANCE = 50;
+const int ALIVE_CHANCE = 20;
 
 // Time per tick in milliseconds
 const int TICK_DURATION = 100;
