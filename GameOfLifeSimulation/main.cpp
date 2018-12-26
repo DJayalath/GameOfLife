@@ -17,7 +17,7 @@ Use TICK_DURATION to adjust speed of simulation
 int s_width = 1280;
 int s_height = 720;
 
-int cell_size = 10;
+int cell_size = 5;
 
 int field_width = s_width / cell_size;
 int field_height = s_height / cell_size;
@@ -35,8 +35,8 @@ std::uniform_int_distribution<int> uni(1, 100); // Unbiased distribution
 void Regenerate(Cell* cells)
 {
 	// Randomly Generate starting configuration
-	for (int x = 1; x < field_width - 1; x++)
-		for (int y = 1; y < field_height - 1; y++)
+	for (int x = 0; x < field_width; x++)
+		for (int y = 0; y < field_height; y++)
 		{
 			if (uni(rng) <= ALIVE_CHANCE)
 				cells[y * field_width + x].SetInitAlive(true);
@@ -59,8 +59,8 @@ int main()
 			cells[y * field_width + x].Init(cell_size, field_width, field_height, x, y);
 
 	// Randomly Generate starting configuration
-	for (int x = 1; x < field_width - 1; x++)
-		for (int y = 1; y < field_height - 1; y++)
+	for (int x = 0; x < field_width; x++)
+		for (int y = 0; y < field_height; y++)
 			if (uni(rng) <= ALIVE_CHANCE)
 				cells[y * field_width + x].SetInitAlive(true);
 
@@ -80,15 +80,15 @@ int main()
 			Regenerate(cells);
 
 		// Apply rules for next generation
-		for (int x = 1; x < field_width - 1; x++)
-			for (int y = 1; y < field_height - 1; y++)
+		for (int x = 0; x < field_width; x++)
+			for (int y = 0; y < field_height; y++)
 				cells[y * field_width + x].ApplyRules(cells);
 
 		window.clear();
 
 		// Update cell for new generation and draw each cell
-		for (int x = 1; x < field_width - 1; x++)
-			for (int y = 1; y < field_height - 1; y++)
+		for (int x = 0; x < field_width; x++)
+			for (int y = 0; y < field_height; y++)
 			{
 				cells[y * field_width + x].Update();
 				window.draw(cells[y * field_width + x].GetShape());

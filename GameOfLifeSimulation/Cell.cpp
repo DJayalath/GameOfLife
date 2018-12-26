@@ -22,7 +22,7 @@ void Cell::ApplyRules(Cell* cells)
 	// Examine 3x3 quadrant around cell excluding self
 	for (int px = m_x - 1; px <= m_x + 1; px++)
 		for (int py = m_y - 1; py <= m_y + 1; py++)
-			if (!(px == m_x && py == m_y) && cells[py * m_width + px].GetAlive())
+			if (!((px + m_width) % m_width == m_x && (py + m_height) % m_height == m_y) && cells[(py + m_height) % m_height * m_width + (px + m_width) % m_width].GetAlive())
 					living_neighbours += 1;
 
 	// Default to dead cell
