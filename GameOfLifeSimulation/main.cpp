@@ -1,7 +1,6 @@
 // BASED ON MICHAEL ABRASH'S GRAPHICS PROGRAMMING BLACK BOOK CHAPTER 17
-
-#include <SFML/Graphics.hpp>
 #include <iostream>
+#include <ctime>
 #include<windows.h>
 
 #define OFF_COLOUR 0
@@ -12,9 +11,11 @@
 // Tick-rate in milliseconds (if LIMIT_RATE == 1)
 #define TICK_RATE 50
 
-// Standard Library and SFML
+// Standard Library
 using namespace std;
-using namespace sf;
+
+COLORREF ON_C = RGB(255, 255, 255);
+COLORREF OFF_C = RGB(0, 0, 0);
 
 // CELL STRUCTURE
 /* 
@@ -44,24 +45,18 @@ private:
 };
 
 // Cell map dimensions
-unsigned int cellmap_width = 16 << 6;
-unsigned int cellmap_height = 9 << 6;
+unsigned int cellmap_width = 100;
+unsigned int cellmap_height = 100;
 
 // Width and height (in pixels) of a cell i.e. magnification
-unsigned int cell_size = 4;
+unsigned int cell_size = 5;
 
 // Randomisation seed
 unsigned int seed;
 
-// Pixel Array stores RGBA values of each pixel on screen
-Uint8* pixel_array;
+// Calculating display dimensions
 unsigned int s_width = cellmap_width * cell_size;
 unsigned int s_height = cellmap_height * cell_size;
-unsigned int screen_width = 1280;
-unsigned int screen_height = 720;
-unsigned int pixel_array_size = s_width * s_height * 4;
-Texture field_tex;
-RenderWindow window(VideoMode(screen_width, screen_height), "Conway's Game of Life");
 
 // Console Graphics
 //Get a console handle
@@ -69,79 +64,46 @@ HWND myconsole = GetConsoleWindow();
 //Get a handle to device context
 HDC mydc = GetDC(myconsole);
 
-void DrawCell(unsigned int x, unsigned int y, int colour)
+void DrawCell(unsigned int x, unsigned int y, COLORREF colour)
 {
-	Uint8* pixel_ptr = pixel_array + (y * cell_size * s_width + x * cell_size) * 4 + 3;
+	x *= cell_size;
+	y *= cell_size;
 
 	for (int i = 0; i < cell_size; i++)
-	{
 		for (int j = 0; j < cell_size; j++)
-			*(pixel_ptr + j * 4) = colour;
-		pixel_ptr += s_width * 4;
-	}
+			SetPixel(mydc, x + i, y + j, colour);
+
+	//Uint8* pixel_ptr = pixel_array + (y * cell_size * s_width + x * cell_size) * 4 + 3;
+
+	//for (int i = 0; i < cell_size; i++)
+	//{
+	//	for (int j = 0; j < cell_size; j++)
+	//		*(pixel_ptr + j * 4) = colour;
+	//	pixel_ptr += s_width * 4;
+	//}
 }
 
 int main()
 {
-	// Initialise pixel array with RGBA: 255,255,255,0
-	pixel_array = new Uint8[pixel_array_size];
-	memset(pixel_array, 255, pixel_array_size);
-	for (int i = 3; i < pixel_array_size; i += 4)
-		pixel_array[i] = 0;
-
-	// Initialise texture and assign to sprite
-	field_tex.create(s_width, s_height);
-	Sprite field(field_tex);
-
 	// Generation counter
 	unsigned long generation = 0;
+
+	//wchar_t *screen = new wchar_t[s_width * s_height];
+	//HANDLE hConso
 
 	// Initialise cell map
 	CellMap current_map(cellmap_width, cellmap_height);
 	current_map.Init(); // Randomly initialize cell map
 
-	// Movement frame independance timing
-	sf::Clock timer;
-	float dt;
-	const float move_speed = 1000;
-
-	Event e;
-	while (window.isOpen())
+	while (true)
 	{
-		dt = timer.restart().asSeconds();
-
-		// SFML event handling
-		while (window.pollEvent(e))
-			if (e.type == sf::Event::Closed)
-				window.close();
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-			window.close();
-		// Field panning
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-			field.move(Vector2f(0, move_speed * dt));
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-			field.move(Vector2f(0, -move_speed * dt));
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-			field.move(Vector2f(move_speed * dt, 0));
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-			field.move(Vector2f(-move_speed * dt, 0));
-
 		// Increment generation
 		generation++;
-		// Recalculate and update next generation
+		// Recalculate and draw next generation
 		current_map.NextGen();
-		// Update texture with new pixel array
-		field_tex.update(pixel_array);
-
-		// Update frame buffer and draw field
-		window.clear();
-		window.draw(field);
-		window.display();
-
-#if LIMIT_RATE
-		sf::sleep(sf::milliseconds(100));
-#endif
 	}
+
+	ReleaseDC(myconsole, mydc);
 
 	cout << "Total Generations: " << generation
 		<< "\nSeed: " << seed << endl;
@@ -257,7 +219,7 @@ void CellMap::NextGen()
 				// On cell must turn off if not 2 or 3 neighbours
 				if ((count != 2) && (count != 3)) {
 					ClearCell(x, y);
-					DrawCell(x, y, OFF_COLOUR);
+					DrawCell(x, y, OFF_C);
 				}
 			}
 			else {
@@ -265,7 +227,7 @@ void CellMap::NextGen()
 				// Off cell must turn on if 3 neighbours
 				if (count == 3) {
 					SetCell(x, y);
-					DrawCell(x, y, ON_COLOUR);
+					DrawCell(x, y, ON_C);
 				}
 			}
 
