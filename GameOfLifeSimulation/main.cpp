@@ -1,18 +1,21 @@
 // BASED ON MICHAEL ABRASH'S GRAPHICS PROGRAMMING BLACK BOOK CHAPTER 17
-#include <SFML/Graphics.hpp>
-#include <iostream>
+#pragma once
 
-#define OFF_COLOUR 0
-#define ON_COLOUR 255
+#include <SDL.h>
+#include <ctime>
+#include <iostream>
+#include <windows.h>
+
+#define OFF_COLOUR 0x00
+#define ON_COLOUR 0xFF
 
 // Limit loop rate for visibility
-#define LIMIT_RATE 1
+#define LIMIT_RATE 0
 // Tick-rate in milliseconds (if LIMIT_RATE == 1)
 #define TICK_RATE 50
 
 // Standard Library
 using namespace std;
-using namespace sf;
 
 // CELL STRUCTURE
 /* 
@@ -42,46 +45,43 @@ private:
 };
 
 // Cell map dimensions
-unsigned int cellmap_width = 100;
-unsigned int cellmap_height = 100;
+unsigned int cellmap_width = 500;
+unsigned int cellmap_height = 500;
 
 // Width and height (in pixels) of a cell i.e. magnification
-unsigned int cell_size = 5;
+unsigned int cell_size = 1;
 
 // Randomisation seed
 unsigned int seed;
 
 // Graphics
-Uint8* pixel_array;
+SDL_Window *window = NULL;
+SDL_Surface* surface = NULL;
 unsigned int s_width = cellmap_width * cell_size;
 unsigned int s_height = cellmap_height * cell_size;
-unsigned int pixel_array_size = s_width * s_height * 4;
-Texture field_tex;
-RenderWindow window(VideoMode(s_width, s_height), "Conway's Game of Life");
 
 void DrawCell(unsigned int x, unsigned int y, unsigned int colour)
 {
-	Uint8* pixel_ptr = pixel_array + (y * cell_size * s_width + x * cell_size) * 4 + 3;
+	Uint8* pixel_ptr = (Uint8*)surface->pixels + (y * cell_size * s_width + x * cell_size) * 4;
 
-	for (int i = 0; i < cell_size; i++)
+	for (unsigned int i = 0; i < cell_size; i++)
 	{
-		for (int j = 0; j < cell_size; j++)
+		for (unsigned int j = 0; j < cell_size; j++)
+		{
 			*(pixel_ptr + j * 4) = colour;
+			*(pixel_ptr + j * 4 + 1) = colour;
+			*(pixel_ptr + j * 4 + 2) = colour;
+		}
 		pixel_ptr += s_width * 4;
 	}
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	// Initialise pixel array with RGBA: 255,255,255,0
-	pixel_array = new Uint8[pixel_array_size];
-	memset(pixel_array, 255, pixel_array_size);
-	for (int i = 3; i < pixel_array_size; i += 4)
-		pixel_array[i] = 0;
-
-	// Initialise texture and assign to sprite
-	field_tex.create(s_width, s_height);
-	Sprite field(field_tex);
+	// SDL boilerplate
+	SDL_Init(SDL_INIT_VIDEO);
+	window = SDL_CreateWindow("Conway's Game of Life", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, s_width, s_height, SDL_WINDOW_SHOWN);
+	surface = SDL_GetWindowSurface(window);
 
 	// Generation counter
 	unsigned long generation = 0;
@@ -90,32 +90,31 @@ int main()
 	CellMap current_map(cellmap_width, cellmap_height);
 	current_map.Init(); // Randomly initialize cell map
 
-	Event e;
-	while (window.isOpen())
-	{
-		// SFML event handling
-		while (window.pollEvent(e))
-			if (e.type == sf::Event::Closed)
-				window.close();
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-			window.close();
+	// SDL Event handler
+	SDL_Event e;
 
-		// Increment generation
+	bool quit = false;
+	while (!quit)
+	{
+		while (SDL_PollEvent(&e) != 0) 
+			if (e.type == SDL_QUIT) quit = true;
+
 		generation++;
+
 		// Recalculate and draw next generation
 		current_map.NextGen();
-		// Update texture with new pixel array
-		field_tex.update(pixel_array);
-
-		// Update frame buffer and draw field
-		window.clear();
-		window.draw(field);
-		window.display();
+		// Update frame buffer
+		SDL_UpdateWindowSurface(window);
 
 #if LIMIT_RATE
-		sleep(milliseconds(50));
+		SDL_Delay(TICK_RATE);
 #endif
 	}
+
+	// Destroy window 
+	SDL_DestroyWindow(window); 
+	// Quit SDL subsystems 
+	SDL_Quit();
 
 	cout << "Total Generations: " << generation
 		<< "\nSeed: " << seed << endl;
@@ -143,7 +142,7 @@ CellMap::~CellMap()
 
 void CellMap::SetCell(unsigned int x, unsigned int y)
 {
-	unsigned int w = width, h = height;
+	int w = width, h = height;
 	int xoleft, xoright, yoabove, yobelow;
 	unsigned char *cell_ptr = cells + (y * w) + x;
 
@@ -169,7 +168,7 @@ void CellMap::SetCell(unsigned int x, unsigned int y)
 
 void CellMap::ClearCell(unsigned int x, unsigned int y)
 {
-	unsigned int w = width, h = height;
+	int w = width, h = height;
 	int xoleft, xoright, yoabove, yobelow;
 	unsigned char *cell_ptr = cells + (y * w) + x;
 
@@ -207,7 +206,7 @@ void CellMap::NextGen()
 {
 	unsigned int x, y, count;
 	unsigned int h = height, w = width;
-	unsigned char *cell_ptr, *row_cell_ptr;
+	unsigned char *cell_ptr;
 
 	// Copy to temp map to keep an unaltered version
 	memcpy(temp_cells, cells, length_in_bytes);
