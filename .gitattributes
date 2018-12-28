@@ -62,4 +62,4 @@
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
 
-GameOfLife/GameOfLifeSimulation/include/* linguist-vendored
+GameOfLifeSimulation/include/* linguist-vendored
