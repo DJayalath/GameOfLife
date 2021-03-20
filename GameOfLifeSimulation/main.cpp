@@ -1,10 +1,10 @@
 // BASED ON MICHAEL ABRASH'S GRAPHICS PROGRAMMING BLACK BOOK CHAPTER 17
-#pragma once
+#define SDL_MAIN_HANDLED
 
 #include <SDL.h>
 #include <ctime>
 #include <iostream>
-#include <windows.h>
+#include <string>
 
 #define OFF_COLOUR 0x00
 #define ON_COLOUR 0xFF
@@ -13,9 +13,6 @@
 #define LIMIT_RATE 0
 // Tick-rate in milliseconds (if LIMIT_RATE == 1)
 #define TICK_RATE 50
-
-// Standard Library
-using namespace std;
 
 // CELL STRUCTURE
 /* 
@@ -78,6 +75,8 @@ void DrawCell(unsigned int x, unsigned int y, unsigned int colour)
 
 int main(int argc, char* argv[])
 {
+	time_t start = time(0);
+	
 	// SDL boilerplate
 	SDL_Init(SDL_INIT_VIDEO);
 	window = SDL_CreateWindow("Conway's Game of Life", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, s_width, s_height, SDL_WINDOW_SHOWN);
@@ -100,7 +99,9 @@ int main(int argc, char* argv[])
 			if (e.type == SDL_QUIT) quit = true;
 
 		generation++;
-
+		// Update window title
+		SDL_SetWindowTitle(window,("Game of Life - " + std::to_string(generation)).c_str());
+		
 		// Recalculate and draw next generation
 		current_map.NextGen();
 		// Update frame buffer
@@ -116,11 +117,13 @@ int main(int argc, char* argv[])
 	// Quit SDL subsystems 
 	SDL_Quit();
 
-	cout << "Total Generations: " << generation
-		<< "\nSeed: " << seed << endl;
+	std::cout << "Total Generations: " << generation <<
+	std::endl << "Seed: " << seed << 
+	std::endl << "Duration: "<< (time(0) - start) << "s" 
+	<< std::endl;
 
-	system("pause");
-
+	std::cin.get();
+	
 	return 0;
 }
 
@@ -260,7 +263,7 @@ void CellMap::Init()
 	seed = (unsigned)time(NULL);
 
 	// Randomly initialise cell map with ~50% on pixels
-	cout << "Initializing" << endl;
+	std::cout << "Initializing" << std::endl;
 
 	srand(seed);
 	init_length = (width * height) / 2;
